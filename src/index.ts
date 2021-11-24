@@ -44,6 +44,10 @@ const typeDefs = gql`
         tweets: [Tweets]
         user(id: String!): User
     }
+
+     type Mutation {
+        likeTweet(id: ID!): Tweet
+    }
 `;
 
 const resolvers = {
@@ -95,6 +99,22 @@ const resolvers = {
                 return user || new ValidationError('User ID not Found');
             } catch (error) {
                 throw new ApolloError(error)
+            }
+        }
+    },
+    Mutation: {
+        likeTweet: async (_: null, args: { id: string }) => {
+            try {
+                const tweetRef = admin.firestore().doc(`tweets/${args.id}`);
+
+                let tweetDoc = await tweetRef.get();
+                const tweet = tweetDoc.data() as Tweet;
+                await tweetRef.update({ likes: tweet.likes + 1 });
+
+                tweetDoc = await tweetRef.get();
+                return tweetDoc.data();
+            } catch (error) {
+                throw new ApolloError(error);
             }
         }
     }
